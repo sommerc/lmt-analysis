@@ -39,12 +39,12 @@ FRONT_REARING_THRESHOLD = 50
 ''' threshold to compute head-genital events '''
 MAX_DISTANCE_HEAD_HEAD_GENITAL_THRESHOLD = 15
 
-oneFrame = 1
+oneFrame  = 1
 oneSecond = 30
 oneMinute = 30*60
-oneHour = 30*60*60
-oneDay = 30*60*60*24
-oneWeek = 30*60*60*24*7
+oneHour   = 30*60*60
+oneDay    = 30*60*60*24
+oneWeek   = 30*60*60*24*7
 
 ''' Minimum duration for the animal to stop at the water point to be classified as drinking '''
 MIN_WATER_STOP_DURATION = 2*oneSecond
