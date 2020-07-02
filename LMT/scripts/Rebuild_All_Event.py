@@ -19,7 +19,7 @@ from lmtanalysis import BuildEventTrain3, BuildEventTrain4, BuildEventTrain2, Bu
     BuildEventSideBySide, BuildEventSideBySideOpposite, BuildEventDetection,\
     BuildDataBaseIndex, BuildEventWallJump, BuildEventSAP,\
     BuildEventOralSideSequence, CheckWrongAnimal,\
-    CorrectDetectionIntegrity, BuildEventNest4, BuildEventNest3, BuildEventGetAway
+    CorrectDetectionIntegrity, BuildEventNest4, BuildEventNest3, BuildEventGetAway, BuildEventFoodPoint
 
 
 from psutil import virtual_memory
@@ -77,6 +77,7 @@ eventClassList = [
                 BuildEventGroup4MakeBreak,
                 BuildEventStop,
                 BuildEventWaterPoint,
+                BuildEventFoodPoint,
                 BuildEventApproachContact,
                 BuildEventWallJump,
                 BuildEventSAP,
