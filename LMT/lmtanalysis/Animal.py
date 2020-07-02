@@ -1385,7 +1385,10 @@ class AnimalPool():
                 data["end_sec"]      .append(e.endFrame   / oneSecond)
                 data["duration"]     .append(e.duration() / oneSecond)
 
+
         df = pd.DataFrame(data)
+        if len(df) == 0:
+            return df
         df.insert(2, "time", pd.to_timedelta(df["start_sec"], unit="s"))
 
         return df.sort_values("time").reset_index(drop=True)
