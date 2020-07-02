@@ -18,6 +18,7 @@ from lmtanalysis.Chronometer import *
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
+from tqdm.auto import tqdm
 from collections import defaultdict
 from mpl_toolkits.mplot3d import *
 import matplotlib.ticker
@@ -1327,7 +1328,7 @@ class AnimalPool():
 
         data = defaultdict(list)
         for animal in self.getAnimalList():
-            for frame, detection in animal.detectionDictionnary.items():
+            for frame, detection in tqdm(animal.detectionDictionnary.items(), desc="Time..."):
                 data["RFID"]         .append(f"{animal.name}_{animal.RFID}")
                 data["name"]         .append(f"{animal.name}")
                 data["genotype"]     .append(f"{animal.genotype}")
@@ -1361,7 +1362,7 @@ class AnimalPool():
             * Event end time
             * Event duration
 
-        Args:
+        Args:computeEventFeatures
             event_name (str): Event name e. g. Rearing
 
         Returns:
@@ -1409,7 +1410,7 @@ class AnimalPool():
             all_event_names = getAllEvents(connection=self.conn)
 
         event_table =  pd.concat([self.getSingleEventTable(event_name)
-                                    for event_name in all_event_names]
+                                    for event_name in tqdm(all_event_names, desc="Events...")]
                                 , axis=0)
         return event_table.sort_values("time").reset_index(drop=True)
 

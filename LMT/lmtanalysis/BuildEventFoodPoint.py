@@ -71,7 +71,7 @@ def reBuildEvent( connection, file, tmin=None, tmax=None, pool = None ):
         FoodZoneTimeLine.endRebuildEventTimeLine(connection)
 
         FoodStopTimeLine.reBuildWithDictionnary( resultFoodStop )
-        FoodStopTimeLine.removeEventsBelowLength( maxLen = MIN_Food_STOP_DURATION )
+        FoodStopTimeLine.removeEventsBelowLength( maxLen = MIN_FOOD_STOP_DURATION )
         FoodStopTimeLine.endRebuildEventTimeLine(connection)
 
 

@@ -46,14 +46,13 @@ oneHour   = 30*60*60
 oneDay    = 30*60*60*24
 oneWeek   = 30*60*60*24*7
 
-''' Minimum duration for the animal to stop at the water point to be classified as drinking '''
-MIN_WATER_STOP_DURATION = 2*oneSecond
 
 '''time window at the end of an event to test overlap with another event'''
 TIME_WINDOW_BEFORE_EVENT = 15*oneFrame
 
 ''' Minimum duration for the animal to stop at the water point to be classified as drinking '''
 MIN_WATER_STOP_DURATION = 2*oneSecond
+MIN_FOOD_STOP_DURATION = 2*oneSecond
 
 ''' Cage center in 50x50cm area'''
 cageCenterCoordinates50x50Area = Point( 256, 208 )
