@@ -1,5 +1,6 @@
 import numpy
 import pandas
+from tqdm.auto import tqdm
 
 from lmtanalysis import Measure
 
@@ -91,8 +92,8 @@ def computeDetectionFeatures(animal_pool, start="0min", end="60min", freq="5min"
                         grp.apply(DetectionFeatures.speed_avg, "in_arena_center")
                     ], axis=1)
 
-def computeEventFeatures(animal_pool, start="0min", end="60min", freq="5min"):
-    """Computes common features of the mice' events in the animal pool,
+def computeMonadicEventFeatures(animal_pool, start="0min", end="60min", freq="5min"):
+    """Computes common features of the mice' monadic events in the animal pool,
        for a given time interval range given by start, end and freq (temporal bin size).
 
        Use pandas convention to specifiy time parameters.
@@ -123,6 +124,44 @@ def computeEventFeatures(animal_pool, start="0min", end="60min", freq="5min"):
     res = pandas.concat([
                    grp.name.first(),
                    grp.genotype.first(),
+                   grp.size(),
+                   grp.apply(EventFeatures.duration_stats)
+    ], axis=1)
+    res = res.rename(columns={0: "Number_of_events"})
+    return res
+
+
+def computeDyadicEventFeature(animal_pool, event_name, start="0min", end="60min", freq="5min"):
+    """Computes common features of an dyadic event in the animal pool per genotype
+       for a given time interval range given by start, end and freq (temporal bin size).
+
+       Use pandas convention to specifiy time parameters.
+           * 3 hours  : "3H"
+           * 5 minutes: "5min"
+
+        Features computed:
+            * number of events
+            * duration of events
+                * mean/median/std
+
+
+    Args:
+        animal_pool (AnimalPool): the animal pool
+        event_name (str)     : event name,
+        start (str, optional): Start time. Defaults to "0min".
+        end (str, optional)  : End time.   Defaults to "60min".
+        freq (str, optional) : Time step.  Defaults to "5min".
+
+    Returns:
+        DataFrame: Multiindex Dataframe containing primary and secondary
+        information and computed event feature:
+
+    """
+    events_table = animal_pool.getDyadicGenotypeGroupedEventTable(event_name)
+    time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=freq)
+
+    grp = events_table.groupby(["event_name", "genotype_primary", "genotype_secondary", pandas.cut(events_table.time, bins=time_delta_rng)])
+    res = pandas.concat([
                    grp.size(),
                    grp.apply(EventFeatures.duration_stats)
     ], axis=1)

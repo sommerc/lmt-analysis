@@ -1328,7 +1328,7 @@ class AnimalPool():
 
         data = defaultdict(list)
         for animal in self.getAnimalList():
-            for frame, detection in tqdm(animal.detectionDictionnary.items(), desc="Time..."):
+            for frame, detection in animal.detectionDictionnary.items():
                 data["RFID"]         .append(f"{animal.name}_{animal.RFID}")
                 data["name"]         .append(f"{animal.name}")
                 data["genotype"]     .append(f"{animal.genotype}")
@@ -1413,5 +1413,63 @@ class AnimalPool():
                                     for event_name in tqdm(all_event_names, desc="Events...")]
                                 , axis=0)
         return event_table.sort_values("time").reset_index(drop=True)
+
+
+
+
+
+    def getDyadicGenotypeGroupedEventTable(self, event_list):
+        """
+        Returns pandas table containing all found events for given event name
+        and the involved mice' genotype
+
+            * Primary / secondary mice genotype
+            * Event start time
+            * Event end time
+            * Event duration
+
+        Args:computeEventFeatures
+            event_name (str): Event name e. g. Rearing
+
+        Returns:
+            DataFrame
+        """
+        data = defaultdict(list)
+        animal_list = self.getAnimalList()
+        for a in animal_list:
+            if a.genotype is None:
+                print("Genotype for all mice needs to be set... (aborting)")
+
+
+        for event_name in tqdm(event_list, desc="Event..."):
+
+            for A in animal_list:
+                for B in animal_list:
+                    if A.baseId == B.baseId:
+                        continue
+
+                    with mute_prints():
+                        eventTimeLine = EventTimeLine(self.conn,
+                                                        event_name,
+                                                        idA=A.baseId,
+                                                        idB=B.baseId,
+                                                        minFrame=self.detectionStartFrame,
+                                                        maxFrame=self.detectionEndFrame)
+
+                    for e in eventTimeLine.getEventList():
+                        data["genotype_primary"]  .append(f"{A.genotype}")
+                        data["genotype_secondary"].append(f"{B.genotype}")
+                        data["event_name"]   .append(event_name)
+                        data["start_sec"]    .append(e.startFrame / oneSecond)
+                        data["end_sec"]      .append(e.endFrame   / oneSecond)
+                        data["duration"]     .append(e.duration() / oneSecond)
+
+
+        df = pd.DataFrame(data)
+        if len(df) == 0:
+            return df
+        df.insert(2, "time", pd.to_timedelta(df["start_sec"], unit="s"))
+
+        return df.sort_values("time").reset_index(drop=True)
 
 
