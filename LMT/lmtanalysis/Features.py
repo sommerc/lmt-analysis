@@ -50,9 +50,10 @@ class EventFeatures():
                             })
 
 
-def computeDetectionFeatures(animal_pool, start="0min", end="60min", freq="5min"):
+def computeDetectionFeatures(animal_pool, start="0min", end="60min", freq=("5min",)):
     """Computes common features of the mouse trajectories in the animal pool,
-       for a given time interval range given by start, end and freq (temporal bin size).
+       for a give time interval ranges given by start, end and list of freq
+       (temporal subdivisions). Start and end stay fixed. only freq is a list.
 
        Use pandas convention to specifiy time parameters.
            * 3 hours  : "3H"
@@ -63,12 +64,11 @@ def computeDetectionFeatures(animal_pool, start="0min", end="60min", freq="5min"
             * distance travelled
             * average speed
 
-
     Args:
         animal_pool (AnimalPool): the animal pool
         start (str, optional): Start time. Defaults to "0min".
         end (str, optional)  : End time.   Defaults to "60min".
-        freq (str, optional) : Time step.  Defaults to "5min".
+        freq (list[str], optional) : Time step.  Defaults to ["5min"].
 
     Returns:
         DataFrame: Multiindex Dataframe containing mouse meta information and
@@ -76,10 +76,12 @@ def computeDetectionFeatures(animal_pool, start="0min", end="60min", freq="5min"
 
     """
     detection_table = animal_pool.getDetectionTable()
-    time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=freq)
+    results = []
+    for fr in freq:
+        time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=fr)
 
-    grp = detection_table.groupby(["RFID", pandas.cut(detection_table.time, bins=time_delta_rng)])
-    return pandas.concat([
+        grp = detection_table.groupby(["RFID", pandas.cut(detection_table.time, bins=time_delta_rng)])
+        res = pandas.concat([
                         grp.name.first(),
                         grp.genotype.first(),
                         grp.apply(DetectionFeatures.total_time),
@@ -92,9 +94,14 @@ def computeDetectionFeatures(animal_pool, start="0min", end="60min", freq="5min"
                         grp.apply(DetectionFeatures.speed_avg, "in_arena_center")
                     ], axis=1)
 
-def computeMonadicEventFeatures(animal_pool, start="0min", end="60min", freq="5min"):
+        results.append(res)
+
+    return results
+
+def computeMonadicEventFeatures(animal_pool, start="0min", end="60min", freq=("5min",)):
     """Computes common features of the mice' monadic events in the animal pool,
-       for a given time interval range given by start, end and freq (temporal bin size).
+       for given time interval ranges given by start, end and list of freq
+       (temporal subdivisions). Start and end stay fixed. only freq is a list.
 
        Use pandas convention to specifiy time parameters.
            * 3 hours  : "3H"
@@ -110,7 +117,7 @@ def computeMonadicEventFeatures(animal_pool, start="0min", end="60min", freq="5m
         animal_pool (AnimalPool): the animal pool
         start (str, optional): Start time. Defaults to "0min".
         end (str, optional)  : End time.   Defaults to "60min".
-        freq (str, optional) : Time step.  Defaults to "5min".
+        freq (list[str], optional) : Time step.  Defaults to "5min".
 
     Returns:
         DataFrame: Multiindex Dataframe containing mouse meta information and
@@ -118,22 +125,27 @@ def computeMonadicEventFeatures(animal_pool, start="0min", end="60min", freq="5m
 
     """
     events_table = animal_pool.getAllEventsTable()
-    time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=freq)
+    results = []
+    for fr in freq:
+        time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=fr)
 
-    grp = events_table.groupby(["event_name", "RFID",  pandas.cut(events_table.time, bins=time_delta_rng)])
-    res = pandas.concat([
+        grp = events_table.groupby(["event_name", "RFID",  pandas.cut(events_table.time, bins=time_delta_rng)])
+        res = pandas.concat([
                    grp.name.first(),
                    grp.genotype.first(),
                    grp.size(),
                    grp.apply(EventFeatures.duration_stats)
-    ], axis=1)
-    res = res.rename(columns={0: "Number_of_events"})
-    return res
+        ], axis=1)
+        res = res.rename(columns={0: "Number_of_events"})
+
+        results.append(res)
+    return results
 
 
-def computeDyadicEventFeature(animal_pool, event_name, start="0min", end="60min", freq="5min"):
+def computeDyadicEventFeature(animal_pool, event_name, start="0min", end="60min", freq=("5min",)):
     """Computes common features of an dyadic event in the animal pool per genotype
-       for a given time interval range given by start, end and freq (temporal bin size).
+       for given time interval ranges given by start, end and list of freq
+       (temporal subdivisions). Start and end stay fixed. only freq is a list.
 
        Use pandas convention to specifiy time parameters.
            * 3 hours  : "3H"
@@ -158,12 +170,15 @@ def computeDyadicEventFeature(animal_pool, event_name, start="0min", end="60min"
 
     """
     events_table = animal_pool.getDyadicGenotypeGroupedEventTable(event_name)
-    time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=freq)
+    results = []
+    for fr in freq:
+        time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=fr)
 
-    grp = events_table.groupby(["event_name", "genotype_primary", "genotype_secondary", pandas.cut(events_table.time, bins=time_delta_rng)])
-    res = pandas.concat([
+        grp = events_table.groupby(["event_name", "genotype_primary", "genotype_secondary", pandas.cut(events_table.time, bins=time_delta_rng)])
+        res = pandas.concat([
                    grp.size(),
                    grp.apply(EventFeatures.duration_stats)
-    ], axis=1)
-    res = res.rename(columns={0: "Number_of_events"})
-    return res
+        ], axis=1)
+        res = res.rename(columns={0: "Number_of_events"})
+        results.append(res)
+    return results
