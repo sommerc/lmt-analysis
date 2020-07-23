@@ -54,7 +54,7 @@ class EventFeatures:
                 "Duration_mean": df["duration"].mean(),
                 "Duration_median": df["duration"].median(),
                 "Duration_std": df["duration"].std(),
-                "Duration_sum": df["duration"].sum(),
+                "Duration_total": df["duration"].sum(),
             }
         )
 
