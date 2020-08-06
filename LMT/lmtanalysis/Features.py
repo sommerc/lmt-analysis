@@ -161,9 +161,9 @@ def computeMonadicEventFeatures(animal_pool, start="0min", end="60min", freq=("5
 
 
 def computeDyadicEventFeature(
-    animal_pool, event_name, start="0min", end="60min", freq=("5min",)
+    animal_pool, event_list, start="0min", end="60min", freq=("5min",)
 ):
-    """Computes common features of an dyadic event in the animal pool per genotype
+    """Computes common features of dyadic events in the animal pool per genotype
        for given time interval ranges given by start, end and list of freq
        (temporal subdivisions). Start and end stay fixed. only freq is a list.
 
@@ -179,7 +179,7 @@ def computeDyadicEventFeature(
 
     Args:
         animal_pool (AnimalPool): the animal pool
-        event_name (str)     : event name,
+        event_list (list[str])     : event list,
         start (str, optional): Start time. Defaults to "0min".
         end (str, optional)  : End time.   Defaults to "60min".
         freq (str, optional) : Time step.  Defaults to "5min".
@@ -189,7 +189,7 @@ def computeDyadicEventFeature(
         information and computed event feature:
 
     """
-    events_table = animal_pool.getDyadicGenotypeGroupedEventTable(event_name)
+    events_table = animal_pool.getDyadicGenotypeGroupedEventTable(event_list)
     results = []
     for fr in freq:
         time_delta_rng = pandas.timedelta_range(start=start, end=end, freq=fr)
