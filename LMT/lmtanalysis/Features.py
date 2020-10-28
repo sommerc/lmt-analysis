@@ -1,8 +1,16 @@
+import os
+import glob
 import numpy
 import pandas
 from tqdm.auto import tqdm
 
 from lmtanalysis import Measure
+
+import seaborn as sns
+from matplotlib import pyplot as plt
+
+import tkinter as tk
+from tkinter import filedialog
 
 
 class DetectionFeatures:
@@ -208,3 +216,206 @@ def computeDyadicEventFeature(
         res = res.rename(columns={0: "Number_of_events"})
         results.append(res)
     return results
+
+
+class _Extractor:
+    sheet_prefix = None
+
+    def __init__(self, fn_list=None, freq="60min"):
+        self.freq = freq
+        self.fn_list = fn_list
+
+        if fn_list is None:
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes("-topmost", True)
+
+            self.fn_list = filedialog.askopenfilenames(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx")],
+                parent=root,
+            )
+
+            if self.fn_list is None:
+                root.destroy()
+                raise RuntimeError("No files selected")
+            root.destroy()
+
+        self.tab = self.read_tabs()
+
+    def read_tabs(self):
+        res = []
+        for xlsx_fn in self.fn_list:
+            tab = pandas.read_excel(
+                xlsx_fn,
+                sheet_name=f"{self.sheet_prefix} {self.freq}",
+                index_col=[0, 1, 2, 3],
+            ).dropna()
+            tab = tab.reset_index()
+
+            tab.replace("mut1", "mut", inplace=True)
+            tab.replace("mut2", "mut", inplace=True)
+            tab.replace("wt1", "wt", inplace=True)
+            tab.replace("wt2", "wt", inplace=True)
+
+            tab.replace("mut3", "mut", inplace=True)
+            tab.replace("mut3", "mut", inplace=True)
+            tab.replace("wt4", "wt", inplace=True)
+            tab.replace("wt4", "wt", inplace=True)
+
+            tab["source_xlsx"] = os.path.basename(xlsx_fn)
+
+            res.append(tab)
+
+        return pandas.concat(res, axis=0)
+
+    def export_xlsx(self):
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+
+        fn_to_save = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            initialdir=os.path.dirname(self.fn_list[0]),
+            filetypes=[("Excel files", "*.xlsx")],
+            initialfile=f"export_{self.sheet_prefix}_{self.freq}",
+            parent=root,
+        )
+
+        if fn_to_save:
+            self.tab.to_excel(fn_to_save)
+
+        root.destroy()
+
+
+class ExtractMonadic(_Extractor):
+    sheet_prefix = "Monadic Events"
+
+    def read_tabs(self):
+        tab = super().read_tabs()
+        tab["condition"] = tab["genotype"]
+        return tab.set_index("event_name")
+
+    def data(self, event_name, column):
+        return self.tab.loc[event_name][["condition", "time", column]]
+
+    def plot(self, event_name, column):
+
+        df = self.data(event_name, column)
+
+        if self.freq == "60min":
+            f, ax = plt.subplots()
+
+            sns.boxplot(
+                x="condition",
+                y=column,
+                data=df,
+                boxprops=dict(alpha=0.1),
+                fliersize=0,
+                ax=ax,
+            )
+            sns.stripplot(x="condition", y=column, data=df, ax=ax)
+            ax.set_title(event_name)
+
+            sns.despine(ax=ax)
+
+        else:
+            g = sns.catplot(x="time", y=column, data=df, kind="strip", row="condition",)
+            g.set_xticklabels(rotation=90)
+            plt.tight_layout()
+            plt.gcf().suptitle(event_name)
+
+    def export_xlsx(self):
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+
+        fn_to_save = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            initialdir=os.path.dirname(self.fn_list[0]),
+            filetypes=[("Excel files", "*.xlsx")],
+            initialfile=f"export_dyadic_{self.freq}",
+            parent=root,
+        )
+
+        if fn_to_save:
+            self.tab.to_excel(fn_to_save)
+
+        root.destroy()
+
+
+class ExtractDyadic(_Extractor):
+    sheet_prefix = "Dyadic Events"
+
+    def read_tabs(self):
+        tab = super().read_tabs()
+        tab["condition"] = tab["genotype_primary"] + " - " + tab["genotype_secondary"]
+        return tab.set_index("event_name")
+
+    def data(self, event_name, column):
+        return self.tab.loc[event_name][["condition", "time", column]]
+
+    def plot(self, event_name, column):
+
+        df = self.data(event_name, column)
+
+        if self.freq == "60min":
+            f, ax = plt.subplots()
+
+            sns.boxplot(
+                x="condition",
+                y=column,
+                data=df,
+                boxprops=dict(alpha=0.1),
+                fliersize=0,
+                ax=ax,
+            )
+            sns.stripplot(x="condition", y=column, data=df, ax=ax)
+            ax.set_title(event_name)
+
+            sns.despine(ax=ax)
+
+        else:
+            g = sns.catplot(x="time", y=column, data=df, kind="strip", row="condition",)
+            g.set_xticklabels(rotation=90)
+            plt.tight_layout()
+            plt.gcf().suptitle(event_name)
+
+
+class ExtractDetection(_Extractor):
+    sheet_prefix = "Detection"
+
+    def read_tabs(self):
+        tab = super().read_tabs()
+        tab["condition"] = tab["genotype"]
+        return tab
+
+    def data(self, column):
+        return self.tab[["condition", "time", column]]
+
+    def plot(self, column):
+
+        df = self.data(column)
+
+        if self.freq == "60min":
+            f, ax = plt.subplots()
+
+            sns.boxplot(
+                x="condition",
+                y=column,
+                data=df,
+                boxprops=dict(alpha=0.1),
+                fliersize=0,
+                ax=ax,
+            )
+            sns.stripplot(x="condition", y=column, data=df, ax=ax)
+
+            sns.despine(ax=ax)
+
+        else:
+            g = sns.catplot(x="time", y=column, data=df, kind="strip", row="condition",)
+            g.set_xticklabels(rotation=90)
+            plt.tight_layout()
+
