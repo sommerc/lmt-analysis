@@ -304,7 +304,7 @@ class ExtractMonadic(_Extractor):
 
         df = self.data(event_name, column)
 
-        if self.freq == "60min":
+        if df.time.nunique() == 1:
             f, ax = plt.subplots()
 
             sns.boxplot(
@@ -361,7 +361,7 @@ class ExtractDyadic(_Extractor):
 
         df = self.data(event_name, column)
 
-        if self.freq == "60min":
+        if df.time.nunique() == 1:
             f, ax = plt.subplots()
 
             sns.boxplot(
@@ -399,7 +399,7 @@ class ExtractDetection(_Extractor):
 
         df = self.data(column)
 
-        if self.freq == "60min":
+        if df.time.nunique() == 1:
             f, ax = plt.subplots()
 
             sns.boxplot(
