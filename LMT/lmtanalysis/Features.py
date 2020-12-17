@@ -1,4 +1,5 @@
 import os
+import re
 import glob
 import numpy
 import pandas
@@ -225,6 +226,11 @@ class _Extractor:
         self.freq = freq
         self.fn_list = fn_list
 
+        re_match = re.match(r"(\d+)min", freq)
+        self.interval = None
+        if re_match:
+            self.interval = int(re_match.groups()[0])
+
         if fn_list is None:
             root = tk.Tk()
             root.withdraw()
@@ -300,7 +306,7 @@ class ExtractMonadic(_Extractor):
     def data(self, event_name, column):
         return self.tab.loc[event_name][["condition", "time", column]]
 
-    def plot(self, event_name, column):
+    def plot(self, event_name, column, order=None, ci=95):
 
         df = self.data(event_name, column)
 
@@ -313,18 +319,35 @@ class ExtractMonadic(_Extractor):
                 data=df,
                 boxprops=dict(alpha=0.1),
                 fliersize=0,
+                order=order,
                 ax=ax,
             )
-            sns.stripplot(x="condition", y=column, data=df, ax=ax)
+            sns.stripplot(x="condition", y=column, data=df, ax=ax, order=order)
             ax.set_title(event_name)
 
             sns.despine(ax=ax)
 
         else:
-            g = sns.catplot(x="time", y=column, data=df, kind="strip", row="condition",)
-            g.set_xticklabels(rotation=90)
+            g = sns.lineplot(
+                x="time",
+                y=column,
+                data=df,
+                hue="condition",
+                err_style="band",
+                ci=ci,
+                hue_order=order,
+            )
+            if self.interval:
+                labels = list(
+                    map(
+                        str,
+                        numpy.arange(df.time.nunique()) * self.interval + self.interval,
+                    )
+                )
+                g.set_xticklabels(labels)
             plt.tight_layout()
             plt.gcf().suptitle(event_name)
+            sns.despine(fig=plt.gcf())
 
     def export_xlsx(self):
 
@@ -357,7 +380,7 @@ class ExtractDyadic(_Extractor):
     def data(self, event_name, column):
         return self.tab.loc[event_name][["condition", "time", column]]
 
-    def plot(self, event_name, column):
+    def plot(self, event_name, column, order=None, ci=95):
 
         df = self.data(event_name, column)
 
@@ -370,18 +393,36 @@ class ExtractDyadic(_Extractor):
                 data=df,
                 boxprops=dict(alpha=0.1),
                 fliersize=0,
+                order=order,
                 ax=ax,
             )
-            sns.stripplot(x="condition", y=column, data=df, ax=ax)
+
+            sns.stripplot(x="condition", y=column, data=df, ax=ax, order=order)
             ax.set_title(event_name)
 
             sns.despine(ax=ax)
 
         else:
-            g = sns.catplot(x="time", y=column, data=df, kind="strip", row="condition",)
-            g.set_xticklabels(rotation=90)
+            g = sns.lineplot(
+                x="time",
+                y=column,
+                data=df,
+                hue="condition",
+                err_style="band",
+                ci=ci,
+                hue_order=order,
+            )
+            if self.interval:
+                labels = list(
+                    map(
+                        str,
+                        numpy.arange(df.time.nunique()) * self.interval + self.interval,
+                    )
+                )
+                g.set_xticklabels(labels)
             plt.tight_layout()
             plt.gcf().suptitle(event_name)
+            sns.despine(fig=plt.gcf())
 
 
 class ExtractDetection(_Extractor):
@@ -395,7 +436,7 @@ class ExtractDetection(_Extractor):
     def data(self, column):
         return self.tab[["condition", "time", column]]
 
-    def plot(self, column):
+    def plot(self, column, order=None, ci=95):
 
         df = self.data(column)
 
@@ -408,14 +449,34 @@ class ExtractDetection(_Extractor):
                 data=df,
                 boxprops=dict(alpha=0.1),
                 fliersize=0,
+                order=order,
                 ax=ax,
             )
-            sns.stripplot(x="condition", y=column, data=df, ax=ax)
+            sns.stripplot(
+                x="condition", y=column, data=df, ax=ax, order=order,
+            )
 
             sns.despine(ax=ax)
 
         else:
-            g = sns.catplot(x="time", y=column, data=df, kind="strip", row="condition",)
-            g.set_xticklabels(rotation=90)
+            g = sns.lineplot(
+                x="time",
+                y=column,
+                data=df,
+                hue="condition",
+                err_style="band",
+                ci=ci,
+                hue_order=order,
+            )
+            if self.interval:
+                labels = list(
+                    map(
+                        str,
+                        numpy.arange(df.time.nunique()) * self.interval + self.interval,
+                    )
+                )
+                g.set_xticklabels(labels)
             plt.tight_layout()
+            plt.gcf().suptitle(column)
+            sns.despine(fig=plt.gcf())
 
